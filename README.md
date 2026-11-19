@@ -30,6 +30,9 @@ Lifecycle: `draft -> sent -> paid`; `draft` and `sent` may also be `void`.
 SQL files live in `invoicing/migrations/` named `NNNN_description.sql`. Where a rollback is
 possible there is a matching `NNNN_description.down.sql`.
 
+Invoices expose `customer_email` and `notes` in the API; they are stored as `billing_email` and
+`internal_memo`.
+
 ## Tests
 
 ```sh

@@ -31,8 +31,8 @@ def _next_number(conn: sqlite3.Connection) -> str:
 def create_invoice(conn: sqlite3.Connection, payload: dict[str, Any]) -> int:
     with conn:
         cur = conn.execute(
-            "INSERT INTO invoices (number, customer_name, customer_email, currency, "
-            "tax_rate_bps, due_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO invoices (number, customer_name, billing_email, currency, "
+            "tax_rate_bps, due_date, internal_memo) VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 _next_number(conn),
                 payload["customer_name"],
@@ -71,6 +71,8 @@ def _hydrate(conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
         )
     ]
     invoice = dict(row)
+    invoice["customer_email"] = invoice.pop("billing_email")
+    invoice["notes"] = invoice.pop("internal_memo")
     invoice["line_items"] = items
     invoice.update(_totals(items, row["tax_rate_bps"]))
     return invoice
