@@ -67,3 +67,26 @@ def test_status_invalid_transition(client, payload):
 def test_status_requires_value(client, payload):
     create(client, payload)
     assert client.post("/invoices/1/status", json={}).status_code == 422
+
+
+def test_list_filters_by_status(client, payload):
+    create(client, payload)
+    create(client, payload)
+    client.post("/invoices/2/status", json={"status": "sent"})
+    sent = client.get("/invoices?status=sent").get_json()
+    assert [i["id"] for i in sent] == [2]
+
+
+def test_list_filters_by_customer_and_due_date(client, payload):
+    create(client, payload)
+    other = {**payload, "customer_email": "ops@other.example", "due_date": "2026-06-01"}
+    create(client, other)
+    by_email = client.get("/invoices?customer_email=OPS@other.example").get_json()
+    assert [i["id"] for i in by_email] == [2]
+    early = client.get("/invoices?due_before=2026-03-01").get_json()
+    assert [i["id"] for i in early] == [1]
+
+
+def test_list_rejects_bad_filters(client):
+    assert client.get("/invoices?status=bogus").status_code == 422
+    assert client.get("/invoices?due_before=yesterday").status_code == 422
