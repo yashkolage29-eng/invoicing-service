@@ -30,6 +30,7 @@ def test_collects_all_errors(payload):
     }
 
 
+@pytest.mark.skip(reason="covered by API tests")
 def test_rejects_unknown_currency_and_bool_quantity(payload):
     payload["currency"] = "XXX"
     payload["line_items"][1]["quantity"] = True
