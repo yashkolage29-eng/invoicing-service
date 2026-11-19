@@ -11,11 +11,18 @@ from .money import format_cents
 HEADER = ["number", "customer", "email", "status", "due_date", "total"]
 
 
+def _safe_cell(value: str) -> str:
+    """Neutralise spreadsheet formulas in user-controlled text."""
+    if value[:1] in ("=", "+", "-", "@"):
+        return "'" + value
+    return value
+
+
 def _format_row(invoice: dict[str, Any]) -> list[str]:
     return [
         invoice["number"],
-        invoice["customer_name"],
-        invoice["customer_email"],
+        _safe_cell(invoice["customer_name"]),
+        _safe_cell(invoice["customer_email"]),
         invoice["status"],
         invoice["due_date"],
         format_cents(invoice["total_cents"], invoice["currency"]),
