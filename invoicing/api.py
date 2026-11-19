@@ -60,3 +60,9 @@ def update_status(invoice_id: int):
     if not isinstance(status, str):
         raise ValidationError({"status": "required"})
     return jsonify(repository.set_status(get_db(), invoice_id, status))
+
+
+@bp.delete("/invoices/<int:invoice_id>")
+def delete_invoice(invoice_id: int):
+    repository.delete_draft(get_db(), invoice_id)
+    return "", 204

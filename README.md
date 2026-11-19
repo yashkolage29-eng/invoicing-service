@@ -21,6 +21,7 @@ The database path comes from `INVOICE_DB` (default `invoices.sqlite3`).
 | POST | `/invoices` | Create an invoice with line items |
 | GET | `/invoices` | List invoices (`limit`, `offset`) |
 | GET | `/invoices/<id>` | Fetch one invoice with totals |
+| DELETE | `/invoices/<id>` | Delete a draft invoice (409 once sent) |
 | POST | `/invoices/<id>/status` | Move an invoice through its lifecycle |
 
 Lifecycle: `draft -> sent -> paid`; `draft` and `sent` may also be `void`.

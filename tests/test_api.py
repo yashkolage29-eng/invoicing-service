@@ -67,3 +67,27 @@ def test_status_invalid_transition(client, payload):
 def test_status_requires_value(client, payload):
     create(client, payload)
     assert client.post("/invoices/1/status", json={}).status_code == 422
+
+
+def test_delete_draft_removes_invoice_and_items(client, app, payload):
+    create(client, payload)
+    assert client.delete("/invoices/1").status_code == 204
+    assert client.get("/invoices/1").status_code == 404
+    from invoicing import db
+
+    conn = db.connect(app.config["DATABASE"])
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM line_items").fetchone()[0] == 0
+    finally:
+        conn.close()
+
+
+def test_delete_sent_invoice_is_conflict(client, payload):
+    create(client, payload)
+    client.post("/invoices/1/status", json={"status": "sent"})
+    assert client.delete("/invoices/1").status_code == 409
+    assert client.get("/invoices/1").status_code == 200
+
+
+def test_delete_missing_invoice_is_404(client):
+    assert client.delete("/invoices/42").status_code == 404
