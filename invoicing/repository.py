@@ -99,3 +99,12 @@ def set_status(conn: sqlite3.Connection, invoice_id: int, new_status: str) -> di
     with conn:
         conn.execute("UPDATE invoices SET status = ? WHERE id = ?", (new_status, invoice_id))
     return get_invoice(conn, invoice_id)
+
+
+def delete_draft(conn: sqlite3.Connection, invoice_id: int) -> None:
+    """Delete an invoice that has never been sent. Line items cascade."""
+    status = get_invoice(conn, invoice_id)["status"]
+    if status != "draft":
+        raise InvalidTransitionError(f"only draft invoices can be deleted, invoice is {status}")
+    with conn:
+        conn.execute("DELETE FROM invoices WHERE id = ?", (invoice_id,))
