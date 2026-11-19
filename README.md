@@ -37,3 +37,8 @@ pytest
 ```
 
 Coverage must stay at or above the threshold in `pyproject.toml`.
+
+## Late fees
+
+`sent` invoices report `late_fee_cents`. Once an invoice is more than 5 days past its due date,
+1.5% of the total is added for every started 30-day period.
