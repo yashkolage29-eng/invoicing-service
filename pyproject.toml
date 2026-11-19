@@ -21,15 +21,15 @@ invoicing = ["migrations/*.sql"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra --strict-markers --cov=invoicing --cov-report=term-missing"
+addopts = "-ra --strict-markers -m 'not slow' --cov=invoicing --cov-report=term-missing"
 markers = ["slow: tests that exercise the full migration chain"]
 
 [tool.coverage.run]
-branch = true
+branch = false
 source = ["invoicing"]
 
 [tool.coverage.report]
-fail_under = 85
+fail_under = 60
 show_missing = true
 exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
 

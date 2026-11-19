@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from flask import Blueprint, jsonify, request
 
 from . import repository
@@ -45,7 +47,24 @@ def list_invoices():
     offset = request.args.get("offset", default=0, type=int)
     if not 1 <= limit <= 100 or offset < 0:
         raise ValidationError({"limit": "must be 1-100", "offset": "must be >= 0"})
-    return jsonify(repository.list_invoices(get_db(), limit, offset))
+    status = request.args.get("status")
+    if status is not None and status not in repository.TRANSITIONS:
+        raise ValidationError({"status": f"must be one of {sorted(repository.TRANSITIONS)}"})
+    due_before = request.args.get("due_before")
+    if due_before is not None:
+        try:
+            date.fromisoformat(due_before)
+        except ValueError:
+            raise ValidationError({"due_before": "must be an ISO date (YYYY-MM-DD)"}) from None
+    invoices = repository.list_invoices(
+        get_db(),
+        limit,
+        offset,
+        status=status,
+        customer_email=request.args.get("customer_email"),
+        due_before=due_before,
+    )
+    return jsonify(invoices)
 
 
 @bp.get("/invoices/<int:invoice_id>")

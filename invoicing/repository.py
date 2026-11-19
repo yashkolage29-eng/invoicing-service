@@ -84,10 +84,28 @@ def get_invoice(conn: sqlite3.Connection, invoice_id: int) -> dict[str, Any]:
 
 
 def list_invoices(
-    conn: sqlite3.Connection, limit: int = 20, offset: int = 0
+    conn: sqlite3.Connection,
+    limit: int = 20,
+    offset: int = 0,
+    status: str | None = None,
+    customer_email: str | None = None,
+    due_before: str | None = None,
 ) -> list[dict[str, Any]]:
+    clauses: list[str] = []
+    params: list[Any] = []
+    if status is not None:
+        clauses.append("status = ?")
+        params.append(status)
+    if customer_email is not None:
+        clauses.append("customer_email = ?")
+        params.append(customer_email.strip().lower())
+    if due_before is not None:
+        clauses.append("due_date < ?")
+        params.append(due_before)
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
     rows = conn.execute(
-        "SELECT * FROM invoices ORDER BY id DESC LIMIT ? OFFSET ?", (limit, offset)
+        f"SELECT * FROM invoices {where} ORDER BY id DESC LIMIT ? OFFSET ?",
+        (*params, limit, offset),
     ).fetchall()
     return [_hydrate(conn, r) for r in rows]
 

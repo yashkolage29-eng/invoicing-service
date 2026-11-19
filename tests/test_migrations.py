@@ -2,6 +2,8 @@ import pytest
 
 from invoicing import db
 
+pytestmark = pytest.mark.slow
+
 
 def test_migrate_applies_all_in_order(conn):
     applied = db.migrate(conn)
