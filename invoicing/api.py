@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 from . import repository
 from .db import get_db
+from .export import invoices_to_csv_v2
 from .validation import ValidationError, parse_invoice
 
 bp = Blueprint("invoices", __name__)
@@ -60,3 +61,9 @@ def update_status(invoice_id: int):
     if not isinstance(status, str):
         raise ValidationError({"status": "required"})
     return jsonify(repository.set_status(get_db(), invoice_id, status))
+
+
+@bp.get("/invoices.csv")
+def export_invoices():
+    invoices = repository.list_invoices(get_db(), limit=100, offset=0)
+    return Response(invoices_to_csv_v2(invoices), mimetype="text/csv")
