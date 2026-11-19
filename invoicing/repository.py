@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import sqlite3
+from datetime import date
 from typing import Any
 
+from .fees import late_fee_cents
 from .money import line_total_cents, tax_cents
 
 TRANSITIONS: dict[str, frozenset[str]] = {
@@ -61,7 +63,9 @@ def _totals(items: list[dict[str, Any]], rate_bps: int) -> dict[str, int]:
     return {"subtotal_cents": subtotal, "tax_cents": tax, "total_cents": subtotal + tax}
 
 
-def _hydrate(conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
+def _hydrate(
+    conn: sqlite3.Connection, row: sqlite3.Row, today: date | None = None
+) -> dict[str, Any]:
     items = [
         dict(r)
         for r in conn.execute(
@@ -73,14 +77,23 @@ def _hydrate(conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
     invoice = dict(row)
     invoice["line_items"] = items
     invoice.update(_totals(items, row["tax_rate_bps"]))
+    invoice["late_fee_cents"] = 0
+    if row["status"] == "sent":
+        invoice["late_fee_cents"] = late_fee_cents(
+            invoice["total_cents"],
+            date.fromisoformat(row["due_date"]),
+            today or date.today(),
+        )
     return invoice
 
 
-def get_invoice(conn: sqlite3.Connection, invoice_id: int) -> dict[str, Any]:
+def get_invoice(
+    conn: sqlite3.Connection, invoice_id: int, today: date | None = None
+) -> dict[str, Any]:
     row = conn.execute("SELECT * FROM invoices WHERE id = ?", (invoice_id,)).fetchone()
     if row is None:
         raise NotFoundError(invoice_id)
-    return _hydrate(conn, row)
+    return _hydrate(conn, row, today)
 
 
 def list_invoices(
