@@ -23,3 +23,8 @@ def test_csv_has_header_and_row():
 def test_csv_quotes_commas_in_names():
     out = invoices_to_csv([make_invoice(customer_name="Acme, Inc.")])
     assert '"Acme, Inc."' in out
+
+
+def test_csv_neutralises_formula_cells():
+    out = invoices_to_csv([make_invoice(customer_name="=HYPERLINK(1)")])
+    assert "'=HYPERLINK(1)" in out
